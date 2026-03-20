@@ -1,0 +1,21 @@
+*.json
+*.tfstate
+.env_encoded
+
+# Python virtual environment
+.venv/
+
+# Data outputs
+data/*.csv
+data/books_output/
+
+#spark-jobs
+spark_jobs/__pycache__
+
+# Terraform local files
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/tfplan
+terraform/*.tfvars
