@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: books_cleaned
+    database: books-pipeline-490008
+    schema: books_cleaned    # This is where Kestra put the tables
+    tables:
+      - name: books
+      - name: users
+      - name: ratings
