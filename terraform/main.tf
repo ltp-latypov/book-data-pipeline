@@ -41,7 +41,16 @@ resource "google_storage_bucket" "books-bucket" {
 }
 
 resource "google_bigquery_dataset" "demo-dataset" {
-  dataset_id = var.bq_dataset_name
+  dataset_id = var.bq_dataset_cleaned
+  location   = var.location
+
+  lifecycle {
+    prevent_destroy = false 
+  }
+}
+
+resource "google_bigquery_dataset" "demo-dataset" {
+  dataset_id = var.bq_dataset_analytics
   location   = var.location
 
   lifecycle {
@@ -84,7 +93,15 @@ resource "kestra_kv" "gcp_bucket_name" {
 resource "kestra_kv" "gcp_dataset" {
   namespace = "books_pipeline"
   key       = "GCP_DATASET"
-  value     = var.bq_dataset_name
+  value     = var.bq_dataset_cleaned
+  type      = "STRING"
+}
+
+
+resource "kestra_kv" "gcp_dataset_analytics" {
+  namespace = "books_pipeline"
+  key       = "GCP_DATASET_ANALYTICS"
+  value     = var.bq_dataset_analytics
   type      = "STRING"
 }
 

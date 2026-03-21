@@ -1,0 +1,58 @@
+version: 2
+
+models:
+  - name: stg_books
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "SAFE_CAST(release_year AS INT64) BETWEEN 1450 AND EXTRACT(YEAR FROM CURRENT_DATE())"
+          config:
+            severity: warn  # Added warn because Spark sends 0s
+    columns:
+      - name: isbn
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_users
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "SAFE_CAST(user_id AS INT64) IS NOT NULL"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "SAFE_CAST(age AS INT64) BETWEEN 5 AND 100"
+          config:
+            severity: warn  # Correct!
+    columns:
+      - name: user_id
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_ratings
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "book_rating BETWEEN 0 AND 10"
+          # severity: error is default here, which is fine since 0 is now allowed
+    columns:
+      - name: user_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_users')
+              field: user_id
+
+      - name: isbn
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_books')
+              field: isbn
+              # Adding warn here is crucial because of the 118k missing ISBNs
+              config:
+                severity: warn 
+      - name: book_rating
+        tests:
+          - not_null

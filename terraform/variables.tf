@@ -13,10 +13,17 @@ variable "location" {
   default     = "europe-west10"
 }
 
-variable "bq_dataset_name" {
-  description = "BigQuery Dataset for Books, Users, Ratings"
+variable "bq_dataset_cleaned" {
+  description = "BigQuery Dataset for Books, Users, Ratings after PySpark cleaning"
   default     = "books_cleaned"
 }
+
+
+variable "bq_dataset_analytics" {
+  description = "BigQuery Dataset for dbt modeling (Books, Users, Ratings)"
+  default     = "books_analytics"
+}
+
 
 variable "gcs_bucket_name" {
   description = "Storage Bucket for Books Data"

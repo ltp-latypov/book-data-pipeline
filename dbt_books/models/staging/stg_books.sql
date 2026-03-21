@@ -1,7 +1,7 @@
 select
-    ISBN,
+    TRIM(ISBN) as isbn,
     -- Basic cleanup for titles
-    INITCAP(TRIM(title)) as title,
+    INITCAP(TRIM(title)) as book_title,
     
     -- THE FIX: 
     -- 1. TRIM extra spaces
@@ -12,7 +12,7 @@ select
     ) as author,
     
     -- Safe cast for the year to handle any remaining dirty data
-    SAFE_CAST(year AS INT64) as release_year,
+    NULLIF(SAFE_CAST(year AS INT64), 0) as release_year,
     
     publisher,
     ingested_at
