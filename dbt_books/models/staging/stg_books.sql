@@ -1,19 +1,17 @@
+
 select
     TRIM(ISBN) as isbn,
-    -- Basic cleanup for titles
-    INITCAP(TRIM(title)) as book_title,
-    
-    -- THE FIX: 
-    -- 1. TRIM extra spaces
-    -- 2. REGEXP_REPLACE removes spaces after dots (J. R. R. -> J.R.R.)
-    -- 3. INITCAP standardizes "MICHAEL CRICHTON" to "Michael Crichton"
+    title,
     INITCAP(
         REGEXP_REPLACE(TRIM(author), r'\.\s+', '.')
     ) as author,
-    
-    -- Safe cast for the year to handle any remaining dirty data
-    NULLIF(SAFE_CAST(year AS INT64), 0) as release_year,
-    
     publisher,
+    -- Apply the technical range check here
+    case 
+        when year < 1300 or year > extract(year from current_date())
+        then null
+        else year
+    end as release_year,
+    image_url_large as book_poster,
     ingested_at
 from {{ source('books_cleaned', 'books') }}
