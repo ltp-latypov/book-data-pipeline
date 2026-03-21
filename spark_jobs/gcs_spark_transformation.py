@@ -92,7 +92,19 @@ def process_books(spark, input_path, output_path):
                         .withColumn("title", F.trim(F.regexp_replace(F.col("title"), "\\s+", " "))
                     )
 
+    logger.info("Convert year to INT type")
     df = df.drop("split_parts").withColumn("year", F.col("year").cast("int"))
+
+    logger.info("Convert uninformative years to NULL")
+    df = df.withColumn("year", 
+                                F.when((F.col("year") == 0) | (F.col("year") > current_year), None)
+                                .otherwise(F.col("year"))
+                        )
+
+    df = df.withColumn("title", F.trim(F.col("title")))
+
+    df = df.withColumn("author", F.initcap(F.regexp_replace(F.trim(F.col("author")), r'\.([^\s])', r'. $1')))
+
     df = df.withColumn("ingested_at", F.current_timestamp())
 
     logger.info(f"Writing transformed BOOKS data from {input_path} source to: {output_path}")
@@ -151,7 +163,6 @@ def process_users(spark, input_path, output_path):
         .when(F.col("loc_size") >= 2, clean_simple(F.col("raw_pre_last_part")))
         .otherwise(F.lit("Unknown"))
     )
-
 
     # 7. CLEANUP & FINALIZE
     df = df.withColumn("age_anomaly", F.when((F.col("age") < 5) | (F.col("age") > 100), 1).otherwise(0))
