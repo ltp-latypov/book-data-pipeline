@@ -1,0 +1,39 @@
+id: subflow_dbt_transformation
+namespace: books_pipeline
+
+tasks:
+  - id: dbt_transformation
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    tasks:
+      - id: clone_repo
+        type: io.kestra.plugin.git.Clone
+        url: https://github.com/ltp-latypov/book-data-pipeline
+        branch: main
+
+      - id: dbt_build
+        type: io.kestra.plugin.dbt.cli.DbtCLI
+        containerImage: ghcr.io/kestra-io/dbt-bigquery:latest
+        projectDir: dbt_books
+        inputFiles:
+          # 1. Put the credentials file at the root of the workspace
+          sa.json: "{{ kv('GCP_CREDS') }}"
+        commands:
+          - dbt deps
+          - dbt debug
+          - dbt run --show-all-deprecations
+        profiles: |
+          dbt_books:
+            outputs:
+              dev:
+                type: bigquery
+                method: service-account
+                project: "books-pipeline-490008"
+                dataset: books_analytics
+                location: europe-west10
+                threads: 4
+                # 2. Reference it simply as sa.json (relative path)
+                keyfile: sa.json
+                job_execution_timeout_seconds: 300
+                job_retries: 1
+                priority: interactive
+            target: dev

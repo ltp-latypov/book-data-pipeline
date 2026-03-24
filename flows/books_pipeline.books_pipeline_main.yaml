@@ -1,3 +1,4 @@
+
 id: books_pipeline_main
 namespace: books_pipeline
 
@@ -9,7 +10,7 @@ tasks:
     wait: true
     transmitFailed: true
 
-  - id: transform
+  - id: spark_transform
     type: io.kestra.plugin.core.flow.Subflow
     flowId: subflow_spark_transform
     namespace: books_pipeline
@@ -19,6 +20,13 @@ tasks:
   - id: load
     type: io.kestra.plugin.core.flow.Subflow
     flowId: subflow_bigquery_load
+    namespace: books_pipeline
+    wait: true
+    transmitFailed: true
+
+  - id: dbt_transform
+    type: io.kestra.plugin.core.flow.Subflow
+    flowId: subflow_dbt_transformation
     namespace: books_pipeline
     wait: true
     transmitFailed: true
