@@ -12,6 +12,21 @@ terraform {
   }
 }
 
+import {
+  to = google_storage_bucket.books-bucket
+  id = "kestra-books-bucket-latypov"
+}
+
+import {
+  to = google_bigquery_dataset.demo-dataset
+  id = "projects/books-pipeline-490008/datasets/books_cleaned"
+}
+
+import {
+  to = google_bigquery_dataset.demo-dataset-analytics
+  id = "projects/books-pipeline-490008/datasets/books_analytics"
+}
+
 provider "google" {
   credentials = file("${path.module}/${var.credentials}")
   project     = var.project
@@ -43,15 +58,19 @@ resource "google_storage_bucket" "books-bucket" {
 resource "google_bigquery_dataset" "demo-dataset" {
   dataset_id = var.bq_dataset_cleaned
   location   = var.location
+  default_table_expiration_ms     = 5184000000
+  default_partition_expiration_ms = 5184000000
 
   lifecycle {
     prevent_destroy = false 
   }
 }
 
-resource "google_bigquery_dataset" "demo-dataset" {
+resource "google_bigquery_dataset" "demo-dataset-analytics" {
   dataset_id = var.bq_dataset_analytics
   location   = var.location
+  default_table_expiration_ms     = 5184000000
+  default_partition_expiration_ms = 5184000000
 
   lifecycle {
     prevent_destroy = false 

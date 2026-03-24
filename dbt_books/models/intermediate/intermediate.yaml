@@ -1,0 +1,7 @@
+models:
+  - name: int_users
+    columns:
+      - name: age_group
+        tests:
+          - accepted_values:
+              values: ['Child', 'Teen', 'Young Adult', 'Adult', 'Senior', 'Unknown']
