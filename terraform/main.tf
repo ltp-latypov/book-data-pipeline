@@ -19,12 +19,12 @@ import {
 
 import {
   to = google_bigquery_dataset.demo-dataset
-  id = "projects/books-pipeline-490008/datasets/books_cleaned"
+  id = "projects/books-pipeline-491409/datasets/books_cleaned"
 }
 
 import {
   to = google_bigquery_dataset.demo-dataset-analytics
-  id = "projects/books-pipeline-490008/datasets/books_analytics"
+  id = "projects/books-pipeline-491409/datasets/books_analytics"
 }
 
 provider "google" {

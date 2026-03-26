@@ -16,6 +16,8 @@ docker compose down -v
 docker image rm python:3.11-slim postgres:18 kestra/kestra:v1.1 apache/spark:4.0.1-java21-r hashicorp/terraform:1.9.5
 
 
+echo SECRET_GCP_SERVICE_ACCOUNT=$(cat service-account.json | base64 -w 0) >> .env_encoded
+
 
 java -version
 # Using SDKMAN (standard in Codespaces)
