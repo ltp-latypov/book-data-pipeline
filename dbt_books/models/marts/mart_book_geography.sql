@@ -9,7 +9,7 @@ ratings as (
 ),
 
 users as (
-    select * from {{ ref('stg_users') }}
+    select * from {{ ref('int_users') }}
 )
 
 select

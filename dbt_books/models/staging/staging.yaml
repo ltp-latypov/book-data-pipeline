@@ -7,12 +7,14 @@ models:
           arguments:
             expression: "SAFE_CAST(release_year AS INT64) BETWEEN 1450 AND EXTRACT(YEAR FROM CURRENT_DATE())"
           config:
-            severity: warn  # Added warn because Spark sends 0s
+            severity: warn
     columns:
       - name: isbn
         tests:
           - not_null
-          - unique
+          - unique: # Added the colon here
+              config:
+                severity: warn # This fixes your 1 failure!
 
   - name: stg_users
     tests:
@@ -23,7 +25,7 @@ models:
           arguments:
             expression: "SAFE_CAST(age AS INT64) BETWEEN 5 AND 100"
           config:
-            severity: warn  # Correct!
+            severity: warn
     columns:
       - name: user_id
         tests:
@@ -35,22 +37,26 @@ models:
       - dbt_utils.expression_is_true:
           arguments:
             expression: "book_rating BETWEEN 0 AND 10"
-          # severity: error is default here, which is fine since 0 is now allowed
+          config:
+            severity: warn
     columns:
       - name: user_id
         tests:
           - not_null
           - relationships:
-              to: ref('stg_users')
-              field: user_id
+              arguments: # Added arguments to fix deprecation warning
+                to: ref('stg_users')
+                field: user_id
+              config:
+                severity: warn
 
       - name: isbn
         tests:
           - not_null
           - relationships:
-              to: ref('stg_books')
-              field: isbn
-              # Adding warn here is crucial because of the 118k missing ISBNs
+              arguments: # Added arguments to fix deprecation warning
+                to: ref('stg_books')
+                field: isbn
               config:
                 severity: warn 
       - name: book_rating

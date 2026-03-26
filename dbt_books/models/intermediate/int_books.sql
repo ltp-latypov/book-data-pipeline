@@ -3,11 +3,13 @@ with stg_books as (
 ),
 
 author_mapping as (
-    select * from {{ ref('author_mappings') }}
+    -- We use DISTINCT here just in case the CSV has a duplicate row
+    select distinct * from {{ ref('author_mappings') }}
 ),
 
 joined as (
-    select
+    -- We use DISTINCT here to stop the 'Stephen Crane' duplicate problem
+    select distinct
         b.isbn,
         b.title,
         coalesce(m.canonical_author, b.author) as author,
@@ -31,11 +33,11 @@ select
     *,
     case 
         when years_since_release is null then 'Unknown'
-        when years_since_release <= 2 then 'New Release'
-        when years_since_release <= 10 then 'Contemporary'
-        when years_since_release <= 30 then 'Modern'
-        when years_since_release <= 100 then 'Vintage'
-        else 'Antique/Classic'
+        when years_since_release <= 2   then 'New Release (0-2 yrs)'
+        when years_since_release <= 10  then 'Contemporary (3-10 yrs)'
+        when years_since_release <= 30  then 'Modern (11-30 yrs)'
+        when years_since_release <= 100 then 'Vintage (31-100 yrs)'
+        else 'Antique/Classic (>100 yrs)'
     end as book_age_category, 
 
     case 
@@ -46,3 +48,6 @@ select
     end as book_format
 
 from age_calculations
+-- THE FINAL SAFETY NET:
+-- This ensures that even if something goes wrong, we only ever have 1 row per ISBN
+-- qualify row_number() over (partition by isbn order by ingested_at desc) = 1

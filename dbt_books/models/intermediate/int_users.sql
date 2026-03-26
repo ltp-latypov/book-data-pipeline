@@ -8,11 +8,11 @@ select
     -- Create User Age Groups
     case 
         when age is null then 'Unknown'
-        when age < 13 then 'Child'
-        when age < 20 then 'Teen'
-        when age < 40 then 'Young Adult'
-        when age < 60 then 'Adult'
-        else 'Senior'
+        when age < 13 then 'Child (0-12)'
+        when age < 20 then 'Teen (13-19)'
+        when age < 40 then 'Young Adult (20-39)'
+        when age < 60 then 'Adult (40-59)'
+        else 'Senior (60+)'
     end as age_group,    
     country,
     city,

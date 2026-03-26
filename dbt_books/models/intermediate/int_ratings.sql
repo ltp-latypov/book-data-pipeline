@@ -23,10 +23,10 @@ select
     r.book_rating,
 
     case 
-        when r.book_rating <= 3 then 'Low'
-        when r.book_rating <= 6 then 'Medium'
-        when r.book_rating <= 8 then 'High'
-        else 'Excellent'
+        when book_rating <= 3 then 'Low (1-3)'
+        when book_rating <= 6 then 'Medium (4-6)'
+        when book_rating <= 8 then 'High (7-8)'
+        else 'Excellent (9-10)'
     end as rating_sentiment,
 
     'Explicit' as rating_type,

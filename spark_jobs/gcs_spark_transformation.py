@@ -1,7 +1,37 @@
+"""
+ETL Pipeline for Books Dataset (Spark + GCS)
+This module performs end-to-end data transformation for:
+- Books
+- Users
+- Ratings
+Pipeline steps:
+1. Read raw CSV data from Google Cloud Storage (GCS)
+2. Apply data cleaning and normalization
+3. Handle malformed rows and encoding issues
+4. Enrich datasets with derived fields
+5. Save transformed data as Parquet
+Technologies:
+- PySpark
+- Google Cloud Storage (GCS)
+- Logging for observability
+"""
+
+# ============================================================
+# DATA QUALITY STRATEGY
+# ============================================================
+# This pipeline includes the following data quality checks:
+# - Null validation for all datasets
+# - Distinct key validation (e.g., ISBN uniqueness)
+# - Detection and correction of malformed rows
+# - Age anomaly detection (users dataset)
+# - Schema enforcement via predefined schemas
+# ============================================================
+
 import os
 import time
 import logging
 from pyspark.sql import SparkSession
+from datetime import datetime
 from pyspark.sql import functions as F
 from constants import Config, Schemas
 from pyspark_utils import split_location_raw, null_check, clean_simple
@@ -46,8 +76,33 @@ spark.sparkContext.setLogLevel("WARN")
 
 # --- 4. PROCESS BOOKS DATA ---
 
-def process_books(spark, input_path, output_path):
+def process_books(spark, input_path: str, output_path: str) -> None:
+
+    """
+    Processes raw books dataset and outputs cleaned Parquet data.
+    Steps:
+    - Reads CSV with predefined schema
+    - Performs null checks and validation
+    - Fixes malformed (shifted) rows
+    - Cleans encoding issues in titles
+    - Standardizes author names
+    - Converts year to integer and removes invalid values
+    - Adds ingestion timestamp
+    Args:
+        spark (SparkSession): Active Spark session
+        input_path (str): Path to raw books CSV in GCS
+        output_path (str): Destination path for cleaned Parquet data
+    Returns:
+        None
+    """
+
     logger.info(f"\n\n# --- 4. PROCESS BOOKS DATA ---")
+
+    # Data quality checks:
+    # - Null validation
+    # - Distinct ISBN validation
+    # - Detection of malformed (shifted) rows
+
     logger.info(f"Reading CSV from: {input_path}")
     
     df = spark.read.options(**Config.CSV_OPTIONS).schema(Schemas.BOOKS_SCHEMA).csv(input_path)
@@ -57,35 +112,40 @@ def process_books(spark, input_path, output_path):
     row_count = df.count()
     logger.info(f"CSV Loaded successfully. Total rows: {row_count}")
     
-    # df.show() outputs to stdout by default, which is fine for visual logs
     df.show(5)
 
-    isbn_distinct = df.select('ISBN').distinct().count()
-    logger.info(f"Distinct ISBN count: {isbn_distinct}")
+    # Validate uniqueness of ISBN
+    # Drop duplicates
+    initial_count = df.count()
+    df = df.dropDuplicates(["ISBN"])
+    final_count = df.count()
     
-    # Null checks
+    logger.info(f"Dropped {initial_count - final_count} duplicate ISBNs")
+    
+    # Null validation
     null_check(df, table_name='BOOKS')
     
-
     # Handling shifted rows
     df = df.withColumn("split_parts", F.split(F.col("title"), r'\";'))
     shifted_rows = df.filter(F.size(F.col("split_parts")) > 1).count()
     logger.info(f"Found {shifted_rows} rows with title splitting issues")
 
+    # Detect rows where author column actually contains year (shifted data)
     author_condition = (F.col("author").rlike(r'^\d{4}$'))
 
+     # Fix shifted rows by reassigning columns
     df = df.withColumn("publisher", F.when(author_condition, F.col("year")).otherwise(F.col("publisher"))) \
                         .withColumn("title", F.when(author_condition, F.col("split_parts").getItem(0)).otherwise(F.col("title"))) \
                         .withColumn("image_url_large", F.when(author_condition, F.col("image_url_medium")).otherwise(F.col("image_url_large"))) \
                         .withColumn("year", F.when(author_condition, F.col("author")).otherwise(F.col("year"))) \
                         .withColumn("author", F.when(author_condition, F.col("split_parts").getItem(1)).otherwise(F.col("author")))          
                                 
-    # Encoding fixes
+    # Fix encoding issues in titles
     logger.info("Apply ENCODING_FIXES from constants")
     for bad_str, good_str in Config.ENCODING_FIXES.items():
         df = df.withColumn("title", F.regexp_replace(F.col("title"), bad_str, good_str))
 
-    # Regex Cleanup
+    # General text cleanup
     df = df.withColumn("title", F.translate(F.col("title"), '\\"', '')) \
                         .withColumn("title", F.regexp_replace(F.col("title"), "&amp;", "&")) \
                         .withColumn("title", F.regexp_replace(F.col("title"), "/", ", ")) \
@@ -95,7 +155,9 @@ def process_books(spark, input_path, output_path):
     logger.info("Convert year to INT type")
     df = df.drop("split_parts").withColumn("year", F.col("year").cast("int"))
 
+    # Remove invalid year values (0 or future years)
     logger.info("Convert uninformative years to NULL")
+    current_year = datetime.now().year
     df = df.withColumn("year", 
                                 F.when((F.col("year") == 0) | (F.col("year") > current_year), None)
                                 .otherwise(F.col("year"))
@@ -103,25 +165,43 @@ def process_books(spark, input_path, output_path):
 
     df = df.withColumn("title", F.trim(F.col("title")))
 
+    # Normalize author names (spacing + capitalization)
     df = df.withColumn("author", F.initcap(F.regexp_replace(F.trim(F.col("author")), r'\.([^\s])', r'. $1')))
 
+    # Add ingestion timestamp
     df = df.withColumn("ingested_at", F.current_timestamp())
 
+    # Write output in Parquet format
     logger.info(f"Writing transformed BOOKS data from {input_path} source to: {output_path}")
     df.write.mode("overwrite").parquet(output_path)
     logger.info("Write operation completed.")
 
 
-
-
 # --- 5. PROCESS USERS DATA ---
 
-
-def process_users(spark, input_path, output_path):
-    logger.info("# --- PROCESS USERS DATA ---")
+def process_users(spark, input_path: str, output_path: str) -> None:
     
-    # 1. CREATE LOOKUP DATAFRAME (The Secret Sauce)
-    # We combine standard countries and specific variants (U.s.a., etc.)
+    """
+    Processes raw users dataset and enriches location data.
+    Key transformations:
+    - Converts age to integer
+    - Splits raw location into structured fields
+    - Uses broadcast join for efficient country normalization
+    - Detects and flags age anomalies
+    Args:
+        spark (SparkSession): Active Spark session
+        input_path (str): Path to raw users CSV
+        output_path (str): Output path for cleaned data
+    """
+
+    logger.info("f\n\n# --- PROCESS USERS DATA ---")
+
+    # Data quality checks:
+    # - Null validation
+    # - Age anomaly detection
+    # - Location parsing validation
+
+    # Create lookup table for country normalization
     lookup_list = []
     for c in Config.VALID_COUNTRIES:
         lookup_list.append((c.lower(), c))
@@ -131,24 +211,34 @@ def process_users(spark, input_path, output_path):
     # Remove duplicates and create DF
     lookup_df = spark.createDataFrame(list(set(lookup_list)), ["raw_name", "clean_country"])
 
-    # 2. READ DATA
+    # Read data
     df = spark.read.options(**Config.CSV_OPTIONS).schema(Schemas.USERS_SCHEMA).csv(input_path)
-    
-    # 3. FIX AGE (Decimal String -> Float -> Int)
+
+    # Convert age safely (string -> float -> int)
     df = df.withColumn("age", F.expr("try_cast(age AS float)").cast("int"))
 
-    # 4. SPLIT LOCATION
+    # Validate uniqueness of user_id
+    # Drop duplicates
+    initial_count = df.count()
+    df = df.dropDuplicates(["user_id"])
+    final_count = df.count()
+    
+    logger.info(f"Dropped {initial_count - final_count} duplicate user_id")
+
+    # Null validation
+    null_check(df, "USERS")
+    df.show(5)
+
+    # Split location string into components
     df = split_location_raw(df)
     
-    # 5. BROADCAST JOIN FOR COUNTRY (This replaces the massive 'INSET' logic)
+    # Broadcast join for efficient country mapping
     # We join our main data against the small lookup table
     df = df.join(F.broadcast(lookup_df), df.raw_last_part == lookup_df.raw_name, "left")
     
-    # Assign the result of the join to 'country'
     df = df.withColumn("country", F.coalesce(F.col("clean_country"), F.lit("Unknown")))
 
-    # 6. CITY & REGION LOGIC (Simplified to avoid 64KB error)
-    # Check if first part contains digits (address)
+    # City and region extraction logic
     first_has_digits = F.col("raw_first_part").rlike(r"\d")
 
     df = df.withColumn("city", 
@@ -164,29 +254,36 @@ def process_users(spark, input_path, output_path):
         .otherwise(F.lit("Unknown"))
     )
 
-    # 7. CLEANUP & FINALIZE
+    # Flag anomalous ages
     df = df.withColumn("age_anomaly", F.when((F.col("age") < 5) | (F.col("age") > 100), 1).otherwise(0))
-    df = df.select(
-        "user_id", "location", "age", "age_anomaly", "country", "city", "region",
-        F.current_timestamp().alias("ingested_at")
-    )
 
-    null_check(df, "USERS")
-    df.show(10)
+    # Add ingestion timestamp
+    df = df.withColumn("ingested_at", F.current_timestamp())
 
+    # Write output in Parquet format 
     logger.info(f"Writing transformed USERS to: {output_path}")
     df.write.mode("overwrite").parquet(output_path)
     logger.info("Write operation completed.")
 
 
-
-
 # --- 6. PROCESS RATING DATA ---
 
+def process_rating(spark, input_path: str, output_path: str) -> None:
 
-def process_rating(spark, input_path, output_path):
+    """
+    Processes raw ratings dataset.
+    Steps:
+    - Reads CSV with schema
+    - Performs null validation
+    - Adds ingestion timestamp
+    """
 
-    logger.info(f"\n\n\n# --- 5. PROCESS RATINGS DATA ---")
+    logger.info(f"\n\n# --- 5. PROCESS RATINGS DATA ---")
+
+    # Data quality checks:
+    # - Null validation
+    # - Schema validation
+
     logger.info(f"Reading RATINGS Data from: {input_path}")
 
     df = spark.read.options(**Config.CSV_OPTIONS).schema(Schemas.RATINGS_SCHEMA).csv(input_path)
@@ -200,12 +297,21 @@ def process_rating(spark, input_path, output_path):
 
     logger.info("Sample rows RATINGS data:")
     df.show(5)
+
+    # Validate uniqueness of user_id and ISBN
+    # Drop duplicates
+    initial_count = df.count()
+    df = df.dropDuplicates(["ISBN", "user_id"])
+    final_count = df.count()
     
-    # Null checks
+    logger.info(f"Dropped {initial_count - final_count} duplicate ISBN, user_id")
+    
+    # Null validation
     null_amount = null_check(df, table_name='RATINGS')
 
     df = df.withColumn("ingested_at", F.current_timestamp())
 
+    # Write output in Parquet format
     logger.info(f"Writing transformed RATINGS data from {input_path} source to: {output_path}")
     df.write.mode("overwrite").parquet(output_path)
     logger.info("Write operation completed.")

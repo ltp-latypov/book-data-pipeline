@@ -1,0 +1,48 @@
+version: 2
+
+models:
+  - name: dim_books
+    columns:
+      - name: isbn
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_users
+    columns:
+      - name: user_id
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_ratings
+    columns:
+      - name: book_rating
+        tests:
+          - not_null
+      # Final check that every rating still has a book/user
+      - name: isbn
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_books')
+                field: isbn
+      - name: user_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_users')
+                field: user_id
+
+  - name: mart_book_analytics
+    description: "The One Big Table for Looker Studio."
+    columns:
+      - name: isbn
+        tests:
+          - not_null
+      - name: user_id
+        tests:
+          - not_null
+      - name: book_rating
+        tests:
+          - not_null
