@@ -3,7 +3,7 @@ version: 2
 sources:
   - name: books_cleaned
     # Use your NEW project ID here
-    database: "{{ env_var('GCP_PROJECT_ID') }}" 
+    database: "{{ target.project }}" 
     schema: books_cleaned
     tables:
       - name: books
