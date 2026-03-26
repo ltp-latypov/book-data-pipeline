@@ -15,3 +15,5 @@ select
     image_url_large as book_poster,
     ingested_at
 from {{ source('books_cleaned', 'books') }}
+
+qualify row_number() over(partition by trim(isbn) order by ingested_at desc) = 1

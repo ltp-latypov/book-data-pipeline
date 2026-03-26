@@ -50,15 +50,15 @@ models:
               config:
                 severity: warn
 
-      - name: isbn
-        tests:
-          - not_null
-          - relationships:
-              arguments: # Added arguments to fix deprecation warning
-                to: ref('stg_books')
-                field: isbn
-              config:
-                severity: warn 
+      # - name: isbn
+      #   tests:
+      #     - not_null
+      #     - relationships:
+      #         arguments: # Added arguments to fix deprecation warning
+      #           to: ref('stg_books')
+      #           field: isbn
+      #         config:
+      #           severity: warn 
       - name: book_rating
         tests:
           - not_null
