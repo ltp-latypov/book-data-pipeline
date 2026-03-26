@@ -1,3 +1,6 @@
+-include .env
+export
+
 # Variables
 VENV = .venv
 PYTHON = $(VENV)/bin/python
@@ -14,22 +17,24 @@ all: venv install encode up
 venv:
 	python3 -m venv $(VENV)
 
-# 2. Install requirements (pointing directly to the venv pip)
+# 2. Install requirements
 install:
 	$(PIP) install -r requirements.txt
 
-# 3. YOUR SPECIFIC COMMAND (Encoded for Makefile)
-# We use > instead of >> to ensure we don't duplicate the line every time you run it
+# 3. Encode Service Account AND Project ID
+# We use '>' for the first line and '>>' for the second to avoid duplication
 encode:
 	@if [ ! -f $(SA_FILE) ]; then echo "Error: $(SA_FILE) not found"; exit 1; fi
-	@echo "Encoding Service Account Key..."
-	@echo SECRET_GCP_SERVICE_ACCOUNT=$$(cat $(SA_FILE) | base64 -w 0) > $(ENV_ENCODED)
+	@if [ -z "$(GCP_PROJECT_ID)" ]; then echo "Error: GCP_PROJECT_ID not set in .env file"; exit 1; fi
+	@echo "Encoding Service Account Key and Project ID..."
+	@echo "SECRET_GCP_SERVICE_ACCOUNT=$$(cat $(SA_FILE) | base64 | tr -d '\n')" > $(ENV_ENCODED)
+	@echo "GCP_PROJECT_ID=$(GCP_PROJECT_ID)" >> $(ENV_ENCODED)
 
-# 4. Docker Compose pointing to the specific env file
+# 4. Docker Compose with the specific env file
 up:
-	docker compose up
+	docker compose --env-file $(ENV_ENCODED) up
 
 # Cleanup
-# clean:
-# 	rm -rf $(VENV)
-# 	rm -f $(ENV_ENCODED)
+clean:
+	rm -rf $(VENV)
+	rm -f $(ENV_ENCODED)
