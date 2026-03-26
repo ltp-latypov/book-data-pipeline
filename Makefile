@@ -1,5 +1,4 @@
--include .env
-export
+GCP_PROJECT_ID := $(shell grep -A 2 'variable "project"' terraform/variables.tf | grep 'default' | cut -d '"' -f 2)
 
 # Variables
 VENV = .venv
@@ -32,7 +31,7 @@ encode:
 
 # 4. Docker Compose with the specific env file
 up:
-	docker compose --env-file $(ENV_ENCODED) up
+	docker compose up
 
 # Cleanup
 clean:

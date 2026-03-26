@@ -2,7 +2,7 @@ id: subflow_dbt_transformation
 namespace: books_pipeline
 
 tasks:
-  - id: dbt_transformation
+  - id: working_dir
     type: io.kestra.plugin.core.flow.WorkingDirectory
     tasks:
       - id: clone_repo
@@ -12,15 +12,14 @@ tasks:
 
       - id: dbt_build
         type: io.kestra.plugin.dbt.cli.DbtCLI
+        # env: block is REMOVED because we use target.project now
         containerImage: ghcr.io/kestra-io/dbt-bigquery:latest
         projectDir: dbt_books
         inputFiles:
-          # 1. Put the credentials file at the root of the workspace
           sa.json: "{{ kv('GCP_CREDS') }}"
         commands:
           - dbt deps
-          - dbt debug
-          - dbt build 
+          - dbt build
         profiles: |
           dbt_books:
             outputs:
@@ -30,10 +29,9 @@ tasks:
                 project: "{{ kv('GCP_PROJECT_ID') }}"
                 dataset: "{{ kv('GCP_DATASET_ANALYTICS') }}"
                 location: "{{ kv('GCP_LOCATION') }}"
-                threads: 4
-                # 2. Reference it simply as sa.json (relative path)
+                threads: 16
                 keyfile: sa.json
-                job_execution_timeout_seconds: 300
-                job_retries: 1
                 priority: interactive
             target: dev
+
+
