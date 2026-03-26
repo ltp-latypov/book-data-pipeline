@@ -27,7 +27,7 @@ variable "bq_dataset_analytics" {
 
 variable "gcs_bucket_name" {
   description = "Storage Bucket for Books Data"
-  default     = "kestra-books-bucket-latypov"
+  default     = "kestra-bucket-latypov"
 }
 
 variable "gcs_storage_class" {

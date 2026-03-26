@@ -1,43 +1,35 @@
 # Variables
-SA_FILE=service-account.json
-ENV_FILE=.env_encoded
+VENV = .venv
+PYTHON = $(VENV)/bin/python
+PIP = $(VENV)/bin/pip
+SA_FILE = service-account.json
+ENV_ENCODED = .env_encoded
 
-.PHONY: all install encode up clean help
+.PHONY: all venv install encode up clean
 
-# Default task: Install, Encode, and Start
-all: install encode up
+# Runs everything in one go
+all: venv install encode up
 
-# 1. Install Python requirements
+# 1. Create virtual environment
+venv:
+	python3 -m venv $(VENV)
+
+# 2. Install requirements (pointing directly to the venv pip)
 install:
-	@echo "Installing requirements..."
-	pip install -r requirements.txt
+	$(PIP) install -r requirements.txt
 
-# 2. Encode the Service Account key into .env_encoded
+# 3. YOUR SPECIFIC COMMAND (Encoded for Makefile)
+# We use > instead of >> to ensure we don't duplicate the line every time you run it
 encode:
-	@if [ ! -f $(SA_FILE) ]; then \
-		echo "ERROR: $(SA_FILE) not found! Please place your GCP JSON key in the root folder."; \
-		exit 1; \
-	fi
-	@echo "Encoding $(SA_FILE) to $(ENV_FILE)..."
-	@echo "SECRET_GCP_SERVICE_ACCOUNT=$$(cat $(SA_FILE) | base64 | tr -d '\n')" > $(ENV_FILE)
-	@echo "Encoding complete."
+	@if [ ! -f $(SA_FILE) ]; then echo "Error: $(SA_FILE) not found"; exit 1; fi
+	@echo "Encoding Service Account Key..."
+	@echo SECRET_GCP_SERVICE_ACCOUNT=$$(cat $(SA_FILE) | base64 -w 0) > $(ENV_ENCODED)
 
-# 3. Start the project with Docker
+# 4. Docker Compose pointing to the specific env file
 up:
-	@echo "Starting Docker Compose..."
-	docker compose --env-file $(ENV_FILE) up -d
+	docker compose up
 
-# Stop and clean up
-down:
-	docker compose down
-
-clean:
-	rm -f $(ENV_FILE)
-	@echo "Cleaned up $(ENV_FILE)"
-
-help:
-	@echo "Available commands:"
-	@echo "  make install - Install python requirements"
-	@echo "  make encode  - Encode service-account.json into .env_encoded"
-	@echo "  make up      - Run docker-compose with the encoded env"
-	@echo "  make all     - Run all of the above"
+# Cleanup
+# clean:
+# 	rm -rf $(VENV)
+# 	rm -f $(ENV_ENCODED)

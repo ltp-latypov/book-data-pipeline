@@ -12,20 +12,20 @@ terraform {
   }
 }
 
-import {
-  to = google_storage_bucket.books-bucket
-  id = "kestra-books-bucket-latypov"
-}
+# import {
+#   to = google_storage_bucket.books-bucket
+#   id = "kestra-books-bucket-latypov"
+# }
 
-import {
-  to = google_bigquery_dataset.demo-dataset
-  id = "projects/books-pipeline-491409/datasets/books_cleaned"
-}
+# import {
+#   to = google_bigquery_dataset.demo-dataset
+#   id = "projects/books-pipeline-491409/datasets/books_cleaned"
+# }
 
-import {
-  to = google_bigquery_dataset.demo-dataset-analytics
-  id = "projects/books-pipeline-491409/datasets/books_analytics"
-}
+# import {
+#   to = google_bigquery_dataset.demo-dataset-analytics
+#   id = "projects/books-pipeline-491409/datasets/books_analytics"
+# }
 
 provider "google" {
   credentials = file("${path.module}/${var.credentials}")
@@ -41,6 +41,8 @@ resource "google_storage_bucket" "books-bucket" {
   name          = var.gcs_bucket_name
   location      = var.location
   force_destroy = true
+
+  uniform_bucket_level_access = true
 
   lifecycle_rule {
     condition { age = 3 }
