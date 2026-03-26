@@ -20,16 +20,16 @@ tasks:
         commands:
           - dbt deps
           - dbt debug
-          - dbt run --show-all-deprecations
+          - dbt build 
         profiles: |
           dbt_books:
             outputs:
               dev:
                 type: bigquery
                 method: service-account
-                project: "books-pipeline-490008"
-                dataset: books_analytics
-                location: europe-west10
+                project: "{{ kv('GCP_PROJECT_ID') }}"
+                dataset: "{{ kv('GCP_DATASET_ANALYTICS') }}"
+                location: "{{ kv('GCP_LOCATION') }}"
                 threads: 4
                 # 2. Reference it simply as sa.json (relative path)
                 keyfile: sa.json
