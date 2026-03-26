@@ -78,8 +78,6 @@ class Config:
     }
 
 
-
-
 class Schemas:
     BOOKS_SCHEMA = StructType([
         StructField("ISBN", StringType(), True),

@@ -113,14 +113,6 @@ def process_books(spark, input_path: str, output_path: str) -> None:
     logger.info(f"CSV Loaded successfully. Total rows: {row_count}")
     
     df.show(5)
-
-    # Validate uniqueness of ISBN
-    # Drop duplicates
-    initial_count = df.count()
-    df = df.dropDuplicates(["ISBN"])
-    final_count = df.count()
-    
-    logger.info(f"Dropped {initial_count - final_count} duplicate ISBNs")
     
     # Null validation
     null_check(df, table_name='BOOKS')
@@ -151,6 +143,14 @@ def process_books(spark, input_path: str, output_path: str) -> None:
                         .withColumn("title", F.regexp_replace(F.col("title"), "/", ", ")) \
                         .withColumn("title", F.trim(F.regexp_replace(F.col("title"), "\\s+", " "))
                     )
+                    
+    # Validate uniqueness of ISBN
+    # Drop duplicates
+    initial_count = df.count()
+    df = df.dropDuplicates(["ISBN"])
+    final_count = df.count()
+    
+    logger.info(f"Dropped {initial_count - final_count} duplicate ISBNs")
 
     logger.info("Convert year to INT type")
     df = df.drop("split_parts").withColumn("year", F.col("year").cast("int"))
@@ -194,7 +194,7 @@ def process_users(spark, input_path: str, output_path: str) -> None:
         output_path (str): Output path for cleaned data
     """
 
-    logger.info("f\n\n# --- PROCESS USERS DATA ---")
+    logger.info(f"\n\n# --- PROCESS USERS DATA ---")
 
     # Data quality checks:
     # - Null validation
@@ -317,27 +317,20 @@ def process_rating(spark, input_path: str, output_path: str) -> None:
     logger.info("Write operation completed.")
 
 
-# --- 7. EXECUTION ---
-try:
-    process_books(spark, input_path = Config.INPUT_PATH_BOOKS, output_path = Config.OUTPUT_PATH_BOOKS)
-except Exception as e:
-    logger.exception("An error occurred during the BOOKS transformation:")
 
-
-try:
-    process_users(spark, input_path = Config.INPUT_PATH_USERS, output_path = Config.OUTPUT_PATH_USERS)
-except Exception as e:
-    logger.exception("An error occurred during the USERS transformation:")
-
-
-try:
-    process_rating(spark, input_path = Config.INPUT_PATH_RATING, output_path = Config.OUTPUT_PATH_RATING)
-except Exception as e:
-    logger.exception("An error occurred during the RATING transformation:")
+# --- 6. MAIN EXECUTION BLOCK ---
+if __name__ == "__main__":
+    try:
+        # Run Pipeline
+        process_books(spark, Config.INPUT_PATH_BOOKS, Config.OUTPUT_PATH_BOOKS)
+        process_users(spark, Config.INPUT_PATH_USERS, Config.OUTPUT_PATH_USERS)
+        process_rating(spark, Config.INPUT_PATH_RATING, Config.OUTPUT_PATH_RATING)
         
+        # FIXED: use 'start' instead of 'start_time'
+        total_time = round(time.time() - start, 2) 
+        logger.info(f"Pipeline completed successfully in {total_time} seconds")
         
-end = time.time()
-logger.info(f"Total time elapsed: {round(end - start, 2)} seconds")
-
-
-spark.stop()
+    except Exception as e:
+        logger.critical(f"Pipeline failed: {e}", exc_info=True)
+    finally:
+        spark.stop()

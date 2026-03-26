@@ -64,3 +64,31 @@ process_users(spark, input_path, output_path)
 
 # --- Stop Spark ---
 spark.stop()
+
+
+
+
+
+# --- 7. EXECUTION ---
+try:
+    process_books(spark, input_path = Config.INPUT_PATH_BOOKS, output_path = Config.OUTPUT_PATH_BOOKS)
+except Exception as e:
+    logger.exception("An error occurred during the BOOKS transformation:")
+
+
+try:
+    process_users(spark, input_path = Config.INPUT_PATH_USERS, output_path = Config.OUTPUT_PATH_USERS)
+except Exception as e:
+    logger.exception("An error occurred during the USERS transformation:")
+
+
+try:
+    process_rating(spark, input_path = Config.INPUT_PATH_RATING, output_path = Config.OUTPUT_PATH_RATING)
+except Exception as e:
+    logger.exception("An error occurred during the RATING transformation:")
+        
+        
+end = time.time()
+logger.info(f"Total time elapsed: {round(end - start, 2)} seconds")
+
+spark.stop()
