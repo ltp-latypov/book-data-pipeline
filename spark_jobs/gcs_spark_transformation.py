@@ -143,7 +143,7 @@ def process_books(spark, input_path: str, output_path: str) -> None:
                         .withColumn("title", F.regexp_replace(F.col("title"), "/", ", ")) \
                         .withColumn("title", F.trim(F.regexp_replace(F.col("title"), "\\s+", " "))
                     )
-                    
+
     # Validate uniqueness of ISBN
     # Drop duplicates
     initial_count = df.count()
@@ -318,7 +318,7 @@ def process_rating(spark, input_path: str, output_path: str) -> None:
 
 
 
-# --- 6. MAIN EXECUTION BLOCK ---
+# --- 7. MAIN EXECUTION BLOCK ---
 if __name__ == "__main__":
     try:
         # Run Pipeline
