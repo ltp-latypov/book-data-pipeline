@@ -4,9 +4,8 @@ models:
   - name: int_books
     description: "Enriched books table."
     tests:
-      # Moving this here fixes the BigQuery "Expected ," error
       - dbt_utils.expression_is_true:
-          arguments:
+          arguments: 
             expression: "years_since_release >= 0 or years_since_release is null"
     columns:
       - name: isbn
@@ -16,7 +15,8 @@ models:
       - name: book_age_category
         tests:
           - accepted_values:
-              values: ['New Release (0-2 yrs)', 'Contemporary (3-10 yrs)', 'Modern (11-30 yrs)', 'Vintage (31-100 yrs)', 'Antique/Classic (>100 yrs)', 'Unknown']
+              arguments: 
+                values: ['New Release (0-2 yrs)', 'Contemporary (3-10 yrs)', 'Modern (11-30 yrs)', 'Vintage (31-100 yrs)', 'Antique/Classic (>100 yrs)', 'Unknown']
 
   - name: int_users
     columns:
@@ -27,12 +27,12 @@ models:
       - name: age_group
         tests:
           - accepted_values:
-              values: ['Child (0-12)', 'Teen (13-19)', 'Young Adult (20-39)', 'Adult (40-59)', 'Senior (60+)', 'Unknown']
+              arguments: # ADD THIS LINE
+                values: ['Child (0-12)', 'Teen (13-19)', 'Young Adult (20-39)', 'Adult (40-59)', 'Senior (60+)', 'Unknown']
 
   - name: int_ratings
     description: "Cleaned ratings table."
     tests:
-      # Moving this here fixes the BigQuery "Expected ," error
       - dbt_utils.expression_is_true:
           arguments:
             expression: "book_rating >= 1 and book_rating <= 10"
@@ -40,10 +40,11 @@ models:
       - name: isbn
         tests:
           - relationships:
-              to: ref('int_books')
-              field: isbn
+              arguments: 
+                to: ref('int_books')
+                field: isbn
       - name: rating_sentiment
         tests:
           - accepted_values:
-              # These MUST match your SQL CASE statement exactly
-              values: ['Low (1-3)', 'Medium (4-6)', 'High (7-8)', 'Excellent (9-10)']
+              arguments: 
+                values: ['Low (1-3)', 'Medium (4-6)', 'High (7-8)', 'Excellent (9-10)']
