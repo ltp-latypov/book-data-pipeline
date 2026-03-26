@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: books_cleaned
+    # Use your NEW project ID here
+    database: books-pipeline-491409
+    schema: books_cleaned
+    tables:
+      - name: books
+      - name: ratings
+      - name: users
