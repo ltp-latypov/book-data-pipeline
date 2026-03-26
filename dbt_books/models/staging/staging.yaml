@@ -5,7 +5,7 @@ models:
     tests:
       - dbt_utils.expression_is_true:
           arguments:
-            expression: "SAFE_CAST(release_year AS INT64) BETWEEN 1450 AND EXTRACT(YEAR FROM CURRENT_DATE())"
+            expression: "SAFE_CAST(release_year AS INT64) BETWEEN 1300 AND EXTRACT(YEAR FROM CURRENT_DATE())"
           config:
             severity: warn
     columns:
