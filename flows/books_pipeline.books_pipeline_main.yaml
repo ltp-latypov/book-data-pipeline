@@ -1,9 +1,10 @@
 
+
 id: books_pipeline_main
 namespace: books_pipeline
 
 tasks:
-  - id: extract
+  - id: extract_to_data_lake
     type: io.kestra.plugin.core.flow.Subflow
     flowId: subflow_extract_kaggle
     namespace: books_pipeline
@@ -17,7 +18,7 @@ tasks:
     wait: true
     transmitFailed: true
 
-  - id: load
+  - id: load_to_DWH
     type: io.kestra.plugin.core.flow.Subflow
     flowId: subflow_bigquery_load
     namespace: books_pipeline
