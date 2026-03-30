@@ -1,6 +1,6 @@
 # 📚 Books Data Pipeline (End-to-End)
 ## 🚀 Overview
-This project is an end-to-end data engineering pipeline built to process and analyze book ratings data.
+This project is part of a data engineering course and focuses on processing and analyzing books, book ratings, book users data sourced from Kaggle. The dataset contains information about books, users, and their ratings, offering insights into reading preferences, author popularity, and global user behavior. By cleaning and modeling this data, the pipeline enables exploration of trends such as top-rated books, rating distributions across countries, and user engagement patterns
 It demonstrates a modern data stack using:
 - Spark for data transformation
 - Google Cloud Storage (GCS) for raw and intermediate storage
@@ -48,15 +48,15 @@ It demonstrates a modern data stack using:
        +---------------------------+
 ---
 ## 📂 Project
+```
 .
 ├── dbt_books/         # dbt project (models, tests, macros)
-├── flows/             # Kestra flows (pipeline orchestration)
-├── logs/              # Pipeline logs
+├── flows/             # Kestra flows (pipeline orchestration)     
 ├── spark_jobs/        # PySpark ETL jobs
 ├── terraform/         # Infrastructure as Code (GCP resources)
-├── Users.csv          # Raw dataset example
 ├── docker-compose.yaml
 └── README.md
+```
 
 ---
 ## ⚙️ Tech Stack
@@ -100,3 +100,4 @@ It demonstrates a modern data stack using:
 ---
 ## ▶️ How to Run
 ### 1. Start services
+
