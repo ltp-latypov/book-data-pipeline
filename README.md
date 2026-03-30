@@ -110,3 +110,7 @@ It demonstrates a modern data stack using:
 
 
 ![Books Data Pipeline Architecture](https://raw.githubusercontent.com/ltp-latypov/book-data-pipeline/refs/heads/main/img/dbt_lineage_graph.png)
+
+
+
+**https://lookerstudio.google.com/reporting/2f7acc39-9917-446b-a9d9-8b3b8d42287e**
