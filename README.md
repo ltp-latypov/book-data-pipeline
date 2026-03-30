@@ -113,13 +113,21 @@ It demonstrates a modern data stack using:
 ## 🔐 Authentication (IMPORTANT)
 To run this project, you need a **Google Cloud service account JSON key**.
 ### Steps:
-1. **Create a service account in GCP with access to:**
+
+1. **Clone Repository**
+
+  ```bash
+git clone https://github.com/ltp-latypov/book-data-pipeline.git
+cd book-data-pipeline
+   ```
+
+2. **Create a service account in GCP with access to:**
   - GCS
   - BigQuery
-2. **Download the JSON key and name it as service-account.json**
-3. **Place it in the project root directory:**
+3. **Download the JSON key and name it as service-account.json**
+4. **Place it in the project root directory:**
 
-4. **Update Project Configuration**:
+5. **Update Project Configuration**:
    - Go to **terraform/** directory edit `variables.tf` and specify your GCP project ID in the `project` variable.
    - In **terraform/** directory create `terraform.tfvars` and specify your kaggle credentials.
    ```
@@ -127,7 +135,7 @@ To run this project, you need a **Google Cloud service account JSON key**.
     kaggle_key="XXXXXXXXX"
    ```
 
-5. **Deploy the infrastructure**:
+6. **Deploy the infrastructure**:
     - Using **Makefile**, type type in terminal window:
    ```bash
    make all
@@ -141,7 +149,7 @@ To run this project, you need a **Google Cloud service account JSON key**.
    docker-compose up --build
    ```
 
-6. **Verify Services & Deployment**:
+7. **Verify Services & Deployment**:
 
    ✅ What should be verified:
     - Terraform initialized and applied successfully 
@@ -151,11 +159,11 @@ To run this project, you need a **Google Cloud service account JSON key**.
     - Spark Worker is connected.
     - Postgres (Kestra's metadata database) is active.
 
-7. **Initial Flow Execution**:
+8. **Initial Flow Execution**:
    - Access the Kestra UI at: [http://localhost:8080/ui/flows/edit/final_project/bigquery_extraction_flow](http://localhost:8080/ui/main/flows/edit/books_pipeline/books_pipeline_main/edit) or find **books_pipeline_main** flow
    - Click "Execute"
 
-8. **Shutdown Procedure**:
+9. **Shutdown Procedure**:
 - To stop the environment:
     - Using **Makefile**, just type
    ```bash
@@ -218,3 +226,9 @@ The processed data is visualized in an interactive [Looker Studio report](https:
 
 	•	Ensure service-account.json .env_encoded and terraform.tears is never committed to Git
 	•	Ensure it is added to .gitignore:
+
+  ```bash
+   service-account.json
+   .env_encoded
+   ```
+
