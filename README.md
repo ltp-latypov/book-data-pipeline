@@ -152,7 +152,7 @@ To run this project, you need a **Google Cloud service account JSON key**.
 - To stop the environment:
     - Using **Makefile**, just type
    ```
-   make dowm
+   make down
    ```
    Or using **Docker**
    ```bash
