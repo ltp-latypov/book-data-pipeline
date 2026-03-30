@@ -38,7 +38,7 @@ docker exec -it spark-master /opt/spark/bin/spark-submit \
 
 
 spark-submit \
---master "local[*]" \
+--master "local[2]" \
 --packages com.google.cloud.bigdataoss:gcs-connector:hadoop3-2.2.17 \
 gcs_spark_transformation.py
 

@@ -2,32 +2,52 @@ id: subflow_extract_kaggle
 namespace: books_pipeline
 
 tasks:
-  - id: working_dir
-    type: io.kestra.plugin.core.flow.WorkingDirectory
-    tasks:
-      - id: download_kaggle
-        type: io.kestra.plugin.scripts.shell.Commands
-        taskRunner:
-          type: io.kestra.plugin.scripts.runner.docker.Docker
-        containerImage: python:3.11-slim
-        env:
-          KAGGLE_USERNAME: "{{ kv('KAGGLE_USERNAME') }}"
-          KAGGLE_KEY: "{{ kv('KAGGLE_KEY') }}"
-        commands:
-          - pip install kaggle
-          - kaggle datasets download -d arashnic/book-recommendation-dataset
-          - apt-get update && apt-get install -y unzip
-          - mkdir -p top_rated_books
-          - unzip book-recommendation-dataset.zip -d top_rated_books
-        outputFiles:
-          - "top_rated_books/*.csv"
+  - id: check_raw_folder
+    type: io.kestra.plugin.gcp.gcs.List
+    from: "gs://{{ kv('GCP_BUCKET_NAME') }}/raw/"
+    serviceAccount: "{{ kv('GCP_CREDS') }}"
+
+  - id: debug_log
+    type: io.kestra.plugin.core.log.Log
+    # This prints the count to the logs so you can verify the number
+    message: "GCS Check: Found {{ outputs.check_raw_folder.blobs | length }} files in raw folder."
+
+  - id: ingest_logic
+    type: io.kestra.plugin.core.flow.If
+    # Use 'is empty' - it's the most reliable Pebble test for arrays
+    condition: "{{ outputs.check_raw_folder.blobs is empty }}"
+    then:
+      - id: working_dir
+        type: io.kestra.plugin.core.flow.WorkingDirectory
+        tasks:
+          - id: download_kaggle
+            type: io.kestra.plugin.scripts.shell.Commands
+            taskRunner:
+              type: io.kestra.plugin.scripts.runner.docker.Docker
+            containerImage: python:3.11-slim
+            env:
+              KAGGLE_USERNAME: "{{ kv('KAGGLE_USERNAME') }}"
+              KAGGLE_KEY: "{{ kv('KAGGLE_KEY') }}"
+            commands:
+              - pip install kaggle
+              - kaggle datasets download -d arashnic/book-recommendation-dataset
+              - apt-get update && apt-get install -y unzip
+              - mkdir -p top_rated_books
+              - unzip -o book-recommendation-dataset.zip -d top_rated_books
+            outputFiles:
+              - "top_rated_books/*.csv"
         
-  - id: upload_files
-    type: io.kestra.plugin.core.flow.ForEach
-    values: ["Books.csv", "Users.csv", "Ratings.csv"]
-    tasks:
-      - id: upload_to_gcs
-        type: io.kestra.plugin.gcp.gcs.Upload
-        from: "{{ outputs.download_kaggle.outputFiles['top_rated_books/' ~ taskrun.value] }}"
-        to: "gs://{{ kv('GCP_BUCKET_NAME') }}/raw/{{ taskrun.value }}"
-        serviceAccount: "{{ kv('GCP_CREDS') }}"
+      - id: upload_files
+        type: io.kestra.plugin.core.flow.ForEach
+        values: ["Books.csv", "Users.csv", "Ratings.csv"]
+        tasks:
+          - id: upload_to_gcs
+            type: io.kestra.plugin.gcp.gcs.Upload
+            from: "{{ outputs.download_kaggle.outputFiles['top_rated_books/' ~ taskrun.value] }}"
+            to: "gs://{{ kv('GCP_BUCKET_NAME') }}/raw/{{ taskrun.value }}"
+            serviceAccount: "{{ kv('GCP_CREDS') }}"
+
+    else:
+      - id: skip_log
+        type: io.kestra.plugin.core.log.Log
+        message: "SKIPPING DOWNLOAD: The 'raw/' folder already contains data (Count: {{ outputs.check_raw_folder.blobs | length }})."

@@ -55,6 +55,9 @@ if not key_path or not os.path.exists(key_path):
     else:
         key_path = "gcp-key.json"
 
+
+
+logger.info(f"Using GCP Key from: {key_path}")
 logger.info(f"\n\n# --- 2. PATH LOGIC GCP_KEY_PATH ---\n")      
 logger.info(f"Using GCP Key from: {key_path}\n")
 
