@@ -140,7 +140,7 @@ cd book-data-pipeline
    ```bash
    make all
    ```
-   Or using **Docker** type in terminal window:
+    - Using **Docker** type in terminal window:
    ```bash
    echo SECRET_GCP_SERVICE_ACCOUNT=$(cat service-account.json | base64 -w 0) >> .env_encoded
    ```
