@@ -1,6 +1,6 @@
 variable "project" {
   description = "Google Cloud project ID"
-  default     = "books-pipeline-491409"
+  default     = "books-pipeline-491409"  # ADD YOUR PROJECT ID
 }
 
 variable "region" {
