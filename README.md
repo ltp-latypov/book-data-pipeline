@@ -114,3 +114,10 @@ It demonstrates a modern data stack using:
 
 
 **https://lookerstudio.google.com/reporting/2f7acc39-9917-446b-a9d9-8b3b8d42287e**
+
+## Dashboard Visualization
+The processed data is visualized in an interactive [Looker Studio report](https://lookerstudio.google.com/reporting/b6746fc0-fd70-4e38-88fa-a4ba20d15288), showcasing birth trends across demographics.
+
+It can looks like
+![Report page 1](img/report_page1.png)
+![Report page 2](img/report_page2.png)
