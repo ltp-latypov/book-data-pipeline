@@ -97,7 +97,16 @@ It demonstrates a modern data stack using:
 - Top books by country
 - User rating behavior
 - Distribution of ratings
+
+
+![Books Data Pipeline Architecture](https://raw.githubusercontent.com/ltp-latypov/book-data-pipeline/refs/heads/main/img/architecture.png)
+
+
 ---
 ## ▶️ How to Run
 ### 1. Start services
 
+
+
+
+![Books Data Pipeline Architecture](https://raw.githubusercontent.com/ltp-latypov/book-data-pipeline/refs/heads/main/img/dbt_lineage_graph.png)
