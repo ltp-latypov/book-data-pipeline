@@ -25,7 +25,7 @@ encode:
 # 3. Start the project with Docker
 up:
 	@echo "Starting Docker Compose..."
-	docker compose --env-file $(ENV_FILE) up -d
+	docker compose --env-file $(ENV_FILE) up
 
 # Stop and clean up
 down:
