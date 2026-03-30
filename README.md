@@ -1,4 +1,4 @@
-# 📚 Books Data Pipeline (End-to-End)
+# 📚 Book Data Pipeline (End-to-End)
 ## 🚀 Overview
 This project is part of a data engineering course and focuses on processing and analyzing books, book ratings, book users data sourced from Kaggle. The dataset contains information about books, users, and their ratings, offering insights into reading preferences, author popularity, and global user behavior. By cleaning and modeling this data, the pipeline enables exploration of trends such as top-rated books, rating distributions across countries, and user engagement patterns
 It demonstrates a modern data stack using:
@@ -67,6 +67,8 @@ It demonstrates a modern data stack using:
 - Docker
 - Terraform
 ---
+
+![Books Data Pipeline Architecture](https://raw.githubusercontent.com/ltp-latypov/book-data-pipeline/refs/heads/main/img/architecture.png)
 ## 🔄 Pipeline Flow
 ### 1. Extract
 - Data is downloaded from Kaggle
@@ -83,6 +85,10 @@ It demonstrates a modern data stack using:
 - stg_books
 - stg_users
 - stg_ratings
+#### Intermediate Layer
+- int_books
+- int_users
+- int_ratings
 #### Marts Layer
 - dim_books
 - dim_users
@@ -99,8 +105,6 @@ It demonstrates a modern data stack using:
 - Distribution of ratings
 
 
-![Books Data Pipeline Architecture](https://raw.githubusercontent.com/ltp-latypov/book-data-pipeline/refs/heads/main/img/architecture.png)
-
 
 ---
 ## ▶️ How to Run
@@ -116,8 +120,8 @@ To run this project, you need a **Google Cloud service account JSON key**.
 3. **Place it in the project root directory:**
 
 4. **Update Project Configuration**:
-   - Edit `variables.tf` and specify your GCP project ID in the `project` variable.
-   - In terraform directory create `terraform.tfvars` and specify your kaggle credentials.
+   - Go to **terraform/** directory edit `variables.tf` and specify your GCP project ID in the `project` variable.
+   - In **terraform/** directory create `terraform.tfvars` and specify your kaggle credentials.
    ```
     kaggle_username="example_username"
     kaggle_key="XXXXXXXXX"
@@ -125,20 +129,23 @@ To run this project, you need a **Google Cloud service account JSON key**.
 
 5. **Deploy the infrastructure**:
     - Using **Makefile**, type type in terminal window:
-   ```
+   ```bash
    make all
    ```
    Or using **Docker** type in terminal window:
    ```bash
    echo SECRET_GCP_SERVICE_ACCOUNT=$(cat service-account.json | base64 -w 0) >> .env_encoded
    ```
-   ```
+
+   ``` bash
    docker-compose up --build
    ```
 
 6. **Verify Services & Deployment**:
 
-   ✅ What is verified:
+   ✅ What should be verified:
+    - Terraform initialized and applied successfully 
+    - Kestra CLI exited with code 0
     - Kestra is healthy and accessible at http://localhost:8080.
     - Spark Master is up (Web UI at http://localhost:38080).
     - Spark Worker is connected.
@@ -151,7 +158,7 @@ To run this project, you need a **Google Cloud service account JSON key**.
 8. **Shutdown Procedure**:
 - To stop the environment:
     - Using **Makefile**, just type
-   ```
+   ```bash
    make down
    ```
    Or using **Docker**
@@ -205,3 +212,9 @@ The processed data is visualized in an interactive [Looker Studio report](https:
 
 ![Report page 1](https://raw.githubusercontent.com/ltp-latypov/book-data-pipeline/refs/heads/main/img/report_1.png)
 ![Report page 2](https://raw.githubusercontent.com/ltp-latypov/book-data-pipeline/refs/heads/main/img/report_2.png)
+
+
+💡 Notes
+
+	•	Ensure service-account.json .env_encoded and terraform.tears is never committed to Git
+	•	Ensure it is added to .gitignore:
