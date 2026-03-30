@@ -106,18 +106,102 @@ It demonstrates a modern data stack using:
 ## ▶️ How to Run
 ### 1. Start services
 
+## 🔐 Authentication (IMPORTANT)
+To run this project, you need a **Google Cloud service account JSON key**.
+### Steps:
+1. **Create a service account in GCP with access to:**
+  - GCS
+  - BigQuery
+2. **Download the JSON key and name it as service-account.json**
+3. **Place it in the project root directory:**
+
+4. **Update Project Configuration**:
+   - Edit `variables.tf` and specify your GCP project ID in the `project` variable.
+   - In terraform directory create `terraform.tfvars` and specify your kaggle credentials.
+   ```
+    kaggle_username="example_username"
+    kaggle_key="XXXXXXXXX"
+   ```
+
+5. **Deploy the infrastructure**:
+    - Using **Makefile**, type type in terminal window:
+   ```
+   make all
+   ```
+   Or using **Docker** type in terminal window:
+   ```bash
+   echo SECRET_GCP_SERVICE_ACCOUNT=$(cat service-account.json | base64 -w 0) >> .env_encoded
+   ```
+   ```
+   docker-compose up --build
+   ```
+
+6. **Verify Services & Deployment**:
+
+   ✅ What is verified:
+    - Kestra is healthy and accessible at http://localhost:8080.
+    - Spark Master is up (Web UI at http://localhost:38080).
+    - Spark Worker is connected.
+    - Postgres (Kestra's metadata database) is active.
+
+7. **Initial Flow Execution**:
+   - Access the Kestra UI at: [http://localhost:8080/ui/flows/edit/final_project/bigquery_extraction_flow](http://localhost:8080/ui/main/flows/edit/books_pipeline/books_pipeline_main/edit) or find **books_pipeline_main** flow
+   - Click "Execute"
+
+8. **Shutdown Procedure**:
+- To stop the environment:
+    - Using **Makefile**, just type
+   ```
+   make dowm
+   ```
+   Or using **Docker**
+   ```bash
+   docker-compose down -v
+   ```
+
+### Partitioning & Clustering
+BigQuery tables are optimized using:
+```sql
+{{ config(
+    materialized='table',
+    partition_by={
+      "field": "release_year",
+      "data_type": "int64",
+      "range": {
+        "start": 1300,
+        "end": 2030,
+        "interval": 10
+      }
+    },
+    cluster_by=['author', 'book_age_category']
+) }}
 
 
+{{ config(
+    materialized='table',
+    partition_by={
+      "field": "age",
+      "data_type": "int64",
+      "range": {
+        "start": 5,
+        "end": 100,
+        "interval": 1
+      }
+    },
+    cluster_by=['country', 'age_group']
+) }}
+```
+
+
+
+
+## DBT Lineage Graph
 
 ![Books Data Pipeline Architecture](https://raw.githubusercontent.com/ltp-latypov/book-data-pipeline/refs/heads/main/img/dbt_lineage_graph.png)
 
 
-
-**https://lookerstudio.google.com/reporting/2f7acc39-9917-446b-a9d9-8b3b8d42287e**
-
 ## Dashboard Visualization
-The processed data is visualized in an interactive [Looker Studio report](https://lookerstudio.google.com/reporting/b6746fc0-fd70-4e38-88fa-a4ba20d15288), showcasing birth trends across demographics.
+The processed data is visualized in an interactive [Looker Studio report](https://lookerstudio.google.com/reporting/2f7acc39-9917-446b-a9d9-8b3b8d42287e), showcasing birth trends across demographics.
 
-It can looks like
-![Report page 1](img/report_page1.png)
-![Report page 2](img/report_page2.png)
+![Report page 1](https://raw.githubusercontent.com/ltp-latypov/book-data-pipeline/refs/heads/main/img/report_1.png)
+![Report page 2](https://raw.githubusercontent.com/ltp-latypov/book-data-pipeline/refs/heads/main/img/report_2.png)
