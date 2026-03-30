@@ -127,7 +127,7 @@ cd book-data-pipeline
 3. **Download the JSON key and name it as service-account.json**
 4. **Place it in the project root directory:**
 
-5. ** Download your Kaggle API credentials at https://www.kaggle.com/settings by clicking on the "Generate New Token" button under the "API" section. Update Project Configuration**:
+5. **Download your Kaggle API credentials at https://www.kaggle.com/settings by clicking on the "Generate New Token" button under the "API" section. Update Project Configuration**:
    - Go to **terraform/** directory edit `variables.tf` and specify your GCP project ID in the `project` variable.
    - In **terraform/** directory create `terraform.tfvars` and specify your kaggle credentials .
    ```
